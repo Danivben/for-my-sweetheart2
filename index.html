@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Pocket of Sunshine Just For You ☀️</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Nunito', 'sans-serif'],
+                        display: ['Fredoka', 'sans-serif'],
+                        hand: ['Caveat', 'cursive'],
+                    },
+                    colors: {
+                        sunshine: {
+                            50: '#FFFDF0',
+                            100: '#FFF1C5',
+                            200: '#FFE5EC',
+                            300: '#FFCAD4',
+                            400: '#FDE2E4',
+                            500: '#E8AEB7',
+                        },
+                        cozy: {
+                            lavender: '#E8DEF8',
+                            rose: '#FFD6E0',
+                            peach: '#FFE5D9',
+                            cream: '#FFF9F2',
+                            mint: '#D8F3DC',
+                        }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'float-slow': 'float 9s ease-in-out infinite',
+                        'pulse-gentle': 'pulseGentle 3s ease-in-out infinite',
+                        'spin-slow': 'spin 12s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+                            '50%': { transform: 'translateY(-15px) rotate(3deg)' },
+                        },
+                        pulseGentle: {
+                            '0%, 100%': { transform: 'scale(1)', opacity: '1' },
+                            '50%': { transform: 'scale(1.04)', opacity: '0.9' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #FFFDF0 0%, #FFE5EC 40%, #F3E8FF 80%, #FFF5F5 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        /* Perspective for 3D flip cards */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.7s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1.5rem;
+        }
+
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 229, 236, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E8AEB7;
+            border-radius: 10px;
+        }
+
+        /* Floating heart particle styles */
+        .heart-particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            animation: floatUpAndFade 2.5s ease-out forwards;
+        }
+
+        @keyframes floatUpAndFade {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0.6) rotate(0deg);
+            }
+            50% {
+                opacity: 0.9;
+                transform: translate(calc(-50% + var(--dx)), calc(-50% - 80px)) scale(1.2) rotate(var(--rot));
+            }
+            100% {
+                opacity: 0;
+                transform: translate(calc(-50% + var(--dx) * 1.5), calc(-50% - 180px)) scale(0.8) rotate(calc(var(--rot) * 2));
+            }
+        }
+
+        /* Squishy Bubble Pop animation */
+        .bubble-pop {
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.3s;
+        }
+        .bubble-pop:active {
+            transform: scale(0.85);
+        }
+        .bubble-pop.popped {
+            transform: scale(0.92);
+            background-color: #E2E8F0 !important;
+            box-shadow: inset 0 3px 6px rgba(0,0,0,0.1) !important;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body class="font-sans text-gray-700 relative pb-16">
+
+    <!-- Background Floating Canvas -->
+    <canvas id="bgCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-60"></canvas>
+
+    <!-- Navigation & Cozy Music Bar -->
+    <header class="sticky top-0 z-40 backdrop-blur-md bg-white/60 border-b border-pink-100/60 px-4 py-3 shadow-sm transition-all">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl animate-bounce">☀️</span>
+                <span class="font-display font-bold text-lg md:text-xl text-rose-500 tracking-wide">Sunshine Hugs</span>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <button id="ambientSoundBtn" onclick="toggleAmbientSound()" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-pink-100 hover:bg-pink-200 text-pink-700 text-xs md:text-sm font-semibold transition-all shadow-sm active:scale-95">
+                    <span id="musicIcon">🎵</span>
+                    <span id="musicText">Play Soft Chimes</span>
+                </button>
+                <div class="hidden sm:flex items-center text-xs font-hand text-pink-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
+                    <span>Stress Level: Decreasing 💕</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 pt-6 space-y-12 relative z-10">
+
+        <!-- 1. Hero Header Section -->
+        <section class="text-center space-y-6 pt-4">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-100/80 border border-rose-200 text-rose-600 text-xs md:text-sm font-bold tracking-wide animate-pulse-gentle">
+                <span>💌</span>
+                <span>A Little Safe Harbor Made Just For You</span>
+                <span>✨</span>
+            </div>
+
+            <h1 class="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-800 leading-tight">
+                A Pocket of Sunshine <br class="hidden sm:inline"/>
+                <span class="bg-gradient-to-r from-rose-400 via-pink-500 to-amber-400 bg-clip-text text-transparent">Just For You</span> 🌻
+            </h1>
+
+            <p class="max-w-2xl mx-auto text-base sm:text-lg text-gray-600 leading-relaxed font-medium">
+                Whenever the world feels a little too noisy, heavy, or demanding, remember this warm space is waiting for you. Take off your worries, leave your stress at the door, and let me wrap you in love.
+            </p>
+
+            <!-- Interactive Virtual Hug Button -->
+            <div class="pt-2">
+                <button id="hugBtn" onclick="triggerVirtualHug(event)" class="group relative inline-flex items-center gap-3 px-8 py-4 text-lg md:text-xl font-bold text-white bg-gradient-to-r from-pink-400 via-rose-400 to-amber-300 rounded-full shadow-lg shadow-pink-300/50 hover:shadow-xl hover:shadow-pink-300/70 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer overflow-hidden">
+                    <span class="text-2xl group-hover:scale-125 transition-transform duration-300">🫂</span>
+                    <span>Send Me a Virtual Hug</span>
+                    <span class="text-2xl group-hover:rotate-12 transition-transform duration-300">💖</span>
+                    <span class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"></span>
+                </button>
+                <p class="text-xs text-rose-400 font-hand text-lg mt-2">(Tap as many times as you need warm hugs!)</p>
+            </div>
+        </section>
+
+        <!-- 2. Heartfelt & Reassuring Paragraphs -->
+        <section class="bg-white/80 backdrop-blur-md border border-pink-100 rounded-3xl p-6 sm:p-10 shadow-xl shadow-rose-100/50 space-y-8 relative overflow-hidden">
+            <!-- Decorative corner accent -->
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-amber-100 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-pink-100 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-center gap-3 border-b border-pink-100 pb-4">
+                <div class="p-2.5 bg-pink-100 text-rose-500 rounded-2xl text-2xl">🧸</div>
+                <div>
+                    <h2 class="font-display text-2xl sm:text-3xl font-bold text-gray-800">A Gentle Note From My Heart</h2>
+                    <p class="text-xs text-gray-500">Read this slowly whenever you feel overwhelmed...</p>
+                </div>
+            </div>
+
+            <div class="space-y-6 text-gray-700 leading-relaxed text-base sm:text-lg">
+                <!-- Paragraph 1 -->
+                <div class="p-4 rounded-2xl bg-amber-50/60 border border-amber-100/80 transition-all hover:bg-amber-50">
+                    <p class="font-medium">
+                        <span class="font-hand text-2xl text-amber-600 block mb-1">My Dearest Love,</span>
+                        If today feels exhausting or heavy, I want you to pause for just a moment, drop your shoulders, and let go of everything you're trying to carry all at once. You put so much heart into everything you do, and even when you feel like you aren't doing enough, please trust me: <strong class="text-rose-500">you are doing absolutely wonderful</strong>. It is completely okay to feel tired, and you don't have to carry the weight of the world alone.
+                    </p>
+                </div>
+
+                <!-- Paragraph 2 -->
+                <div class="p-4 rounded-2xl bg-pink-50/60 border border-pink-100/80 transition-all hover:bg-pink-50">
+                    <p class="font-medium">
+                        Take a slow, soft breath right now. Inhale all the warmth, affection, and quiet peace I'm sending your way, and exhale all the tension sitting in your chest. Whatever deadline, task, or uncertainty is stressing you out today is only a tiny temporary moment in time. It does not define how brilliant, capable, and extraordinarily special you truly are.
+                    </p>
+                </div>
+
+                <!-- Paragraph 3 -->
+                <div class="p-4 rounded-2xl bg-purple-50/60 border border-purple-100/80 transition-all hover:bg-purple-50">
+                    <p class="font-medium">
+                        I am always in your corner—on your bright sunshiny days, but especially on the cloudy, noisy ones. You don't have to pretend to be strong or put on a smile around me. You can just be yourself: tired, stressed, quiet, or whatever you feel right now. You will still be the absolute sweetest, most cherished person in my entire world.
+                    </p>
+                </div>
+
+                <!-- Paragraph 4 -->
+                <div class="p-4 rounded-2xl bg-rose-50/60 border border-rose-100/80 transition-all hover:bg-rose-50">
+                    <p class="font-medium">
+                        So give yourself permission to rest a little bit. Wrap yourself in comfort, sip some cool fresh water, and know that I am right here beside you, holding your hand through it all. You've got this, and I've got you. Always. ❤️
+                    </p>
+                </div>
+            </div>
+
+            <div class="pt-2 text-right">
+                <span class="font-hand text-3xl text-rose-500 font-bold">Forever loving you, always ✨</span>
+            </div>
+        </section>
+
+        <!-- 3. 'Reasons You Make My World Brighter' Grid -->
+        <section class="space-y-6">
+            <div class="text-center space-y-2">
+                <div class="inline-block p-2 bg-amber-100 text-amber-600 rounded-full text-xl mb-1">✨</div>
+                <h2 class="font-display text-2xl sm:text-3xl font-bold text-gray-800">Reasons You Make My World Brighter</h2>
+                <p class="text-sm text-gray-500">Tap or click each card to reveal a little secret!</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+                <!-- Card 1 -->
+                <div class="flip-card h-52 cursor-pointer perspective-1000" onclick="toggleFlip(this)">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front bg-gradient-to-br from-pink-100 to-rose-100 border border-pink-200 p-6 flex flex-col items-center justify-center text-center shadow-md hover:shadow-lg transition-shadow">
+                            <span class="text-4xl mb-3">🌟</span>
+                            <h3 class="font-display font-bold text-lg text-rose-700">Your Radiant Kindness</h3>
+                            <p class="text-xs text-pink-500 mt-2 font-semibold">Tap to flip 💫</p>
+                        </div>
+                        <div class="flip-card-back bg-rose-500 text-white border border-rose-400 p-6 flex flex-col items-center justify-center text-center shadow-lg">
+                            <p class="text-sm font-medium leading-relaxed">
+                                The soft, caring way you treat everyone around you inspires me every single day. You have a heart of pure gold.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="flip-card h-52 cursor-pointer perspective-1000" onclick="toggleFlip(this)">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front bg-gradient-to-br from-amber-100 to-yellow-100 border border-amber-200 p-6 flex flex-col items-center justify-center text-center shadow-md hover:shadow-lg transition-shadow">
+                            <span class="text-4xl mb-3">😊</span>
+                            <h3 class="font-display font-bold text-lg text-amber-700">Your Precious Laugh</h3>
+                            <p class="text-xs text-amber-600 mt-2 font-semibold">Tap to flip 💫</p>
+                        </div>
+                        <div class="flip-card-back bg-amber-400 text-amber-950 border border-amber-300 p-6 flex flex-col items-center justify-center text-center shadow-lg">
+                            <p class="text-sm font-medium leading-relaxed">
+                                Hearing you genuinely laugh is hands-down my absolute favorite sound in the world. It lights up any dark room instantly.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="flip-card h-52 cursor-pointer perspective-1000" onclick="toggleFlip(this)">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front bg-gradient-to-br from-purple-100 to-indigo-100 border border-purple-200 p-6 flex flex-col items-center justify-center text-center shadow-md hover:shadow-lg transition-shadow">
+                            <span class="text-4xl mb-3">🌸</span>
+                            <h3 class="font-display font-bold text-lg text-purple-700">Your Quiet Strength</h3>
+                            <p class="text-xs text-purple-500 mt-2 font-semibold">Tap to flip 💫</p>
+                        </div>
+                        <div class="flip-card-back bg-purple-500 text-white border border-purple-400 p-6 flex flex-col items-center justify-center text-center shadow-lg">
+                            <p class="text-sm font-medium leading-relaxed">
+                                Even when you don't feel like it, you are so resilient and strong. I admire your perseverance more than you know.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="flip-card h-52 cursor-pointer perspective-1000" onclick="toggleFlip(this)">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front bg-gradient-to-br from-emerald-100 to-teal-100 border border-emerald-200 p-6 flex flex-col items-center justify-center text-center shadow-md hover:shadow-lg transition-shadow">
+                            <span class="text-4xl mb-3">☕</span>
+                            <h3 class="font-display font-bold text-lg text-emerald-700">Cozy Moments With You</h3>
+                            <p class="text-xs text-emerald-600 mt-2 font-semibold">Tap to flip 💫</p>
+                        </div>
+                        <div class="flip-card-back bg-emerald-600 text-white border border-emerald-500 p-6 flex flex-col items-center justify-center text-center shadow-lg">
+                            <p class="text-sm font-medium leading-relaxed">
+                                Just sitting next to you doing absolutely nothing feels like the safest, warmest place in the universe.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="flip-card h-52 cursor-pointer perspective-1000" onclick="toggleFlip(this)">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front bg-gradient-to-br from-rose-100 to-pink-200 border border-rose-300 p-6 flex flex-col items-center justify-center text-center shadow-md hover:shadow-lg transition-shadow">
+                            <span class="text-4xl mb-3">🦋</span>
+                            <h3 class="font-display font-bold text-lg text-rose-800">Your Cute Quirks</h3>
+                            <p class="text-xs text-rose-600 mt-2 font-semibold">Tap to flip 💫</p>
+                        </div>
+                        <div class="flip-card-back bg-rose-400 text-white border border-rose-300 p-6 flex flex-col items-center justify-center text-center shadow-lg">
+                            <p class="text-sm font-medium leading-relaxed">
+                                From your adorable little habits to the way you get passionate about things—everything about you is endlessly charming.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6 -->
+                <div class="flip-card h-52 cursor-pointer perspective-1000" onclick="toggleFlip(this)">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front bg-gradient-to-br from-sky-100 to-blue-100 border border-sky-200 p-6 flex flex-col items-center justify-center text-center shadow-md hover:shadow-lg transition-shadow">
+                            <span class="text-4xl mb-3">🏠</span>
+                            <h3 class="font-display font-bold text-lg text-sky-700">You Are My Home</h3>
+                            <p class="text-xs text-sky-500 mt-2 font-semibold">Tap to flip 💫</p>
+                        </div>
+                        <div class="flip-card-back bg-sky-500 text-white border border-sky-400 p-6 flex flex-col items-center justify-center text-center shadow-lg">
+                            <p class="text-sm font-medium leading-relaxed">
+                                No matter where we are or what's happening, being with you feels like home. You make my entire life complete.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- 4. Interactive Smile & Stress Buster Station -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <!-- Sub-Station A: Love Note Jar -->
+            <div class="bg-white/80 backdrop-blur-md border border-rose-100 rounded-3xl p-6 shadow-xl shadow-rose-100/40 flex flex-col justify-between space-y-4">
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl">💌</span>
+                        <h3 class="font-display text-xl font-bold text-gray-800">Tap for a Love Note</h3>
+                    </div>
+                    <p class="text-xs text-gray-500">Need a sudden boost of affection? Pull a random note out of the jar!</p>
+                </div>
+
+                <!-- Display Box for Note -->
+                <div id="loveNoteDisplay" class="min-h-[120px] bg-amber-50/80 border border-amber-200 rounded-2xl p-5 flex items-center justify-center text-center transition-all duration-300">
+                    <p class="font-hand text-2xl text-amber-900 font-bold leading-snug">
+                        "Tap the button below to draw your secret love note! 🌸"
+                    </p>
+                </div>
+
+                <button onclick="drawLoveNote()" class="w-full py-3.5 px-4 bg-gradient-to-r from-amber-300 via-rose-300 to-pink-300 hover:from-amber-400 hover:to-pink-400 text-rose-900 font-bold rounded-2xl shadow-md active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <span>✨</span>
+                    <span>Draw a Love Note</span>
+                    <span>💌</span>
+                </button>
+            </div>
+
+            <!-- Sub-Station B: Stress Pop Bubble Wrap -->
+            <div class="bg-white/80 backdrop-blur-md border border-purple-100 rounded-3xl p-6 shadow-xl shadow-purple-100/40 flex flex-col justify-between space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">🫧</span>
+                            <h3 class="font-display text-xl font-bold text-gray-800">Stress Pop Wrap</h3>
+                        </div>
+                        <p class="text-xs text-gray-500">Pop away your worries, one bubble at a time!</p>
+                    </div>
+                    <span id="popScore" class="px-3 py-1 bg-purple-100 text-purple-700 font-bold text-xs rounded-full">
+                        0 Popped
+                    </span>
+                </div>
+
+                <!-- 4x4 Grid of Squishy Bubbles -->
+                <div class="grid grid-cols-4 gap-2.5 p-2 bg-purple-50/50 rounded-2xl border border-purple-100">
+                    <!-- 16 Bubbles dynamically generated/handled -->
+                    <button class="bubble-pop aspect-square bg-gradient-to-tr from-pink-200 to-purple-200 rounded-2xl shadow-sm border border-white flex items-center justify-center text-xl cursor-pointer" onclick="popBubble(this)">💗</button>
+                    <button class="bubble-pop aspect-square bg-gradient-to-tr from-pink-200 to-purple-200 rounded-2xl shadow-sm border border-white flex items-center justify-center text-xl cursor-pointer" onclick="popBubble(this)">⭐</button>
+                    <button class="bubble-pop aspect-square bg-gradient-to-tr from-pink-200 to-purple-200 rounded-2xl shadow-sm border border-white flex items-center justify-center text-xl cursor-pointer" onclick="popBubble(this)">🌸</button>
+                    <button class="bubble-pop aspect-square bg-gradient-to-tr from-pink-200 to-purple-200 rounded-2xl shadow-sm border border-white flex items-center justify-center text-xl cursor-pointer" onclick="popBubble(this)">✨</button>
+                    <button class="bubble-pop aspect-square bg-gradient-to-tr from-pink-200 to-purple-200 rounded-2xl shadow-sm border border-white flex items-center justify-center text-xl cursor-pointer" onclick="popBubble(this)">🎈</button>
+                    <button class="bubble-pop aspect-square bg-gradient-to-tr from-pink-200 to-purple-200 rounded-2xl shadow-sm border border-white flex items-center justify-center text-xl cursor-pointer" onclick="popBubble(this)">💖</button>
+                    <button class="bubble-pop aspect-square bg-gradient-to-tr from-pink-200 to-purple-200 rounded-2xl shadow-sm border border-white flex items-center justify-center text-xl cursor-pointer" onclick="popBubble(this)">🧸</button>
+                    <button class="bubble-pop aspect-square bg-gradient-to-tr from-pink-200 to-purple-200 rounded-2xl shadow-sm border border-white flex items-center justify-center text-xl cursor-pointer" onclick="popBubble(this)">🌼</button>
+                    <button class="bubble-pop aspect-square bg-gradient-to-tr from-pink-200 to-purple-200 rounded-2xl shadow-sm border border-white flex items-center justify-center text-xl cursor-pointer" onclick="popBubble(this)">🌟</button>
+                    <button class="bubble-pop aspect-square bg-gradient-to-tr from-pink-200 to-purple-200 rounded-2xl shadow-sm border border-white flex items-center justify-center text-xl cursor-pointer" onclick="popBubble(this)">💌</button>
+                    <button class="bubble-pop aspect-square bg-gradient-to-tr from-pink-200 to-purple-200 rounded-2xl shadow-sm border border-white flex items-center justify-center text-xl cursor-pointer" onclick="popBubble(this)">🌷</button>
+                    <button class="bubble-pop aspect-square bg-gradient-to-tr from-pink-200 to-purple-200 rounded-2xl shadow-sm border border-white flex items-center justify-center text-xl cursor-pointer" onclick="popBubble(this)">🧁</button>
+                </div>
+
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-gray-400 font-medium">Feels like bubble wrap!</span>
+                    <button onclick="resetBubbles()" class="text-purple-600 hover:text-purple-800 font-semibold underline cursor-pointer">
+                        Reset Bubbles 🔄
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- 5. 'Cozy Gentle Reminders' -->
+        <section class="bg-gradient-to-r from-cozy-rose via-cozy-peach to-cozy-cream rounded-3xl p-6 sm:p-8 border border-pink-200/60 shadow-lg space-y-6">
+            <div class="flex items-center gap-3">
+                <span class="text-3xl">☕</span>
+                <div>
+                    <h2 class="font-display text-2xl font-bold text-gray-800">Cozy Gentle Reminders</h2>
+                    <p class="text-xs text-gray-600">Check off these soft care steps for yourself right now:</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm font-semibold">
+                <!-- Checkitem 1 -->
+                <label class="flex items-center gap-3 p-3.5 bg-white/70 hover:bg-white rounded-2xl cursor-pointer transition-all border border-pink-100 shadow-sm">
+                    <input type="checkbox" onchange="toggleReminder(this)" class="w-5 h-5 accent-rose-400 rounded cursor-pointer">
+                    <span class="text-gray-700">🫁 Take 3 slow, deep breaths in & out</span>
+                </label>
+
+                <!-- Checkitem 2 -->
+                <label class="flex items-center gap-3 p-3.5 bg-white/70 hover:bg-white rounded-2xl cursor-pointer transition-all border border-pink-100 shadow-sm">
+                    <input type="checkbox" onchange="toggleReminder(this)" class="w-5 h-5 accent-rose-400 rounded cursor-pointer">
+                    <span class="text-gray-700">💧 Take a soothing sip of cold water</span>
+                </label>
+
+                <!-- Checkitem 3 -->
+                <label class="flex items-center gap-3 p-3.5 bg-white/70 hover:bg-white rounded-2xl cursor-pointer transition-all border border-pink-100 shadow-sm">
+                    <input type="checkbox" onchange="toggleReminder(this)" class="w-5 h-5 accent-rose-400 rounded cursor-pointer">
+                    <span class="text-gray-700">🧘‍♀️ Relax shoulders away from your ears</span>
+                </label>
+
+                <!-- Checkitem 4 -->
+                <label class="flex items-center gap-3 p-3.5 bg-white/70 hover:bg-white rounded-2xl cursor-pointer transition-all border border-pink-100 shadow-sm">
+                    <input type="checkbox" onchange="toggleReminder(this)" class="w-5 h-5 accent-rose-400 rounded cursor-pointer">
+                    <span class="text-gray-700">😬 Unclench your jaw and soften your face</span>
+                </label>
+
+                <!-- Checkitem 5 -->
+                <label class="flex items-center gap-3 p-3.5 bg-white/70 hover:bg-white rounded-2xl cursor-pointer transition-all border border-pink-100 shadow-sm sm:col-span-2">
+                    <input type="checkbox" onchange="toggleReminder(this)" class="w-5 h-5 accent-rose-400 rounded cursor-pointer">
+                    <span class="text-gray-700">❤️ Remember that you are unconditionally loved & deeply cherished</span>
+                </label>
+            </div>
+        </section>
+
+        <!-- Final Heartwarming Footer Message -->
+        <footer class="text-center pt-6 space-y-3">
+            <p class="font-hand text-3xl text-rose-500 font-bold">
+                I'm always just one text or call away 💕
+            </p>
+            <p class="text-xs text-gray-400">
+                Created with all the love in my heart, specifically for you.
+            </p>
+        </footer>
+
+    </main>
+
+    <!-- Virtual Hug Banner / Modal Notification -->
+    <div id="hugModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center space-y-4 shadow-2xl border border-pink-200 transform scale-90 transition-transform duration-300" id="hugModalContent">
+            <div class="text-6xl animate-bounce">🫂</div>
+            <h3 class="font-display text-2xl font-bold text-gray-800">Virtual Hug Delivered!</h3>
+            <p class="text-sm text-gray-600 leading-relaxed font-medium">
+                Squeezing you tight right now! Imagine me holding your hand, resting my head next to yours, and telling you everything is going to be alright.
+            </p>
+            <button onclick="closeHugModal()" class="w-full py-3 bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white font-bold rounded-2xl shadow-md active:scale-95 transition-all">
+                Aww, thank you! 💕
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /* Web Audio API Synthesizer for soft chime sounds & pop effects */
+        let audioCtx = null;
+        let isMuted = true;
+        let ambientTimer = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Soft pop tone for bubbles
+        function playPopSound() {
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                // Frequency sweep for squishy pop sound
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.08);
+
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.08);
+            } catch (e) {
+                // Audio fallback silence
+            }
+        }
+
+        // Magical soft chord chime for Virtual Hug
+        function playHugChime() {
+            try {
+                initAudio();
+                const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, E6
+                notes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+
+                    const startTime = audioCtx.currentTime + (idx * 0.08);
+                    gain.gain.setValueAtTime(0.08, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 1.2);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(startTime);
+                    osc.stop(startTime + 1.2);
+                });
+            } catch (e) {}
+        }
+
+        // Toggle gentle ambient soothing chimes
+        function toggleAmbientSound() {
+            initAudio();
+            const musicIcon = document.getElementById('musicIcon');
+            const musicText = document.getElementById('musicText');
+
+            if (isMuted) {
+                isMuted = false;
+                musicIcon.textContent = '🔊';
+                musicText.textContent = 'Chimes On';
+                startAmbientLoop();
+            } else {
+                isMuted = true;
+                musicIcon.textContent = '🎵';
+                musicText.textContent = 'Play Soft Chimes';
+                if (ambientTimer) clearInterval(ambientTimer);
+            }
+        }
+
+        function startAmbientLoop() {
+            const chordSequence = [
+                [261.63, 329.63, 392.00, 493.88], // Cmaj7
+                [220.00, 261.63, 329.63, 392.00], // Am7
+                [174.61, 220.00, 261.63, 329.63], // Fmaj7
+                [196.00, 246.94, 293.66, 392.00]  // G
+            ];
+            let chordIdx = 0;
+
+            const playNextChord = () => {
+                if (isMuted) return;
+                const notes = chordSequence[chordIdx];
+                notes.forEach((freq) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.value = freq * 2; // soft high pitch octave
+
+                    gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 3.5);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 3.5);
+                });
+                chordIdx = (chordIdx + 1) % chordSequence.length;
+            };
+
+            playNextChord();
+            ambientTimer = setInterval(playNextChord, 4000);
+        }
+
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class BackgroundParticle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height + 20;
+                this.size = Math.random() * 12 + 8;
+                this.speedY = Math.random() * 0.8 + 0.3;
+                this.speedX = Math.sin(Math.random() * Math.PI) * 0.4;
+                this.opacity = Math.random() * 0.5 + 0.2;
+                this.symbol = ['💖', '✨', '🌸', '☀️', '⭐', '☁️'][Math.floor(Math.random() * 6)];
+            }
+            update() {
+                this.y -= this.speedY;
+                this.x += this.speedX;
+                if (this.y < -30) this.reset();
+            }
+            draw() {
+                ctx.globalAlpha = this.opacity;
+                ctx.font = `${this.size}px sans-serif`;
+                ctx.fillText(this.symbol, this.x, this.y);
+            }
+        }
+
+        for (let i = 0; i < 25; i++) {
+            particles.push(new BackgroundParticle());
+        }
+
+        function animateCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateCanvas);
+        }
+        animateCanvas();
+
+        // Flip Cards toggle function
+        function toggleFlip(cardElement) {
+            cardElement.classList.toggle('flipped');
+            playPopSound();
+        }
+
+        // Virtual Hug particle explosion
+        function triggerVirtualHug(event) {
+            playHugChime();
+
+            // Spawn floating hearts from click position or button center
+            const rect = event.target.getBoundingClientRect();
+            const startX = event.clientX || (rect.left + rect.width / 2);
+            const startY = event.clientY || (rect.top + rect.height / 2);
+
+            const heartEmojis = ['💖', '💕', '💗', '💓', '✨', '🌸', '🫂', '💌', '🧸'];
+
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'heart-particle';
+                particle.textContent = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
+                
+                particle.style.left = `${startX}px`;
+                particle.style.top = `${startY}px`;
+                particle.style.fontSize = `${Math.random() * 20 + 20}px`;
+
+                // Random direction offsets
+                const dx = (Math.random() - 0.5) * 300;
+                const rot = (Math.random() - 0.5) * 90;
+                particle.style.setProperty('--dx', `${dx}px`);
+                particle.style.setProperty('--rot', `${rot}deg`);
+
+                document.body.appendChild(particle);
+
+                setTimeout(() => {
+                    particle.remove();
+                }, 2500);
+            }
+
+            // Show Hug Modal
+            const modal = document.getElementById('hugModal');
+            const modalContent = document.getElementById('hugModalContent');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modalContent.classList.remove('scale-90');
+            modalContent.classList.add('scale-100');
+        }
+
+        function closeHugModal() {
+            const modal = document.getElementById('hugModal');
+            const modalContent = document.getElementById('hugModalContent');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-90');
+        }
+
+        // Love Note Generator
+        const loveNotes = [
+            "Remember: You don't have to carry everything all at once. Just focus on this single moment. ❤️",
+            "I love you more than all the stars in the night sky combined. ✨",
+            "You are doing so much better than you give yourself credit for! 🌟",
+            "My favorite place in the world is right next to you. 🏡",
+            "Drink a sip of water, relax your jaw, and remember I'm your biggest cheerleader! 📣",
+            "No matter how cloudy today feels, your smile is my brightest sunshine. ☀️",
+            "You are smart, kind, resilient, and deeply loved. Never forget that! 💖",
+            "Sending you a giant warm blanket hug right now! 🧸"
+        ];
+
+        let lastNoteIndex = -1;
+        function drawLoveNote() {
+            playPopSound();
+            const display = document.getElementById('loveNoteDisplay');
+            
+            // Pick random note without repeating immediately
+            let idx;
+            do {
+                idx = Math.floor(Math.random() * loveNotes.length);
+            } while (idx === lastNoteIndex && loveNotes.length > 1);
+            lastNoteIndex = idx;
+
+            display.style.opacity = '0';
+            display.style.transform = 'scale(0.95)';
+
+            setTimeout(() => {
+                display.innerHTML = `<p class="font-hand text-2xl text-amber-900 font-bold leading-snug animation-fade">"${loveNotes[idx]}"</p>`;
+                display.style.opacity = '1';
+                display.style.transform = 'scale(1)';
+            }, 150);
+        }
+
+        // Stress Pop Bubble Wrap interaction
+        let poppedCount = 0;
+        function popBubble(btn) {
+            if (!btn.classList.contains('popped')) {
+                btn.classList.add('popped');
+                poppedCount++;
+                document.getElementById('popScore').textContent = `${poppedCount} Popped!`;
+                playPopSound();
+            }
+        }
+
+        function resetBubbles() {
+            const bubbles = document.querySelectorAll('.bubble-pop');
+            bubbles.forEach(b => b.classList.remove('popped'));
+            poppedCount = 0;
+            document.getElementById('popScore').textContent = `0 Popped`;
+            playPopSound();
+        }
+
+        // Reminder Checkbox trigger sound/sparkles
+        function toggleReminder(checkbox) {
+            playPopSound();
+            if (checkbox.checked) {
+                // Spawn a quick sparkle indicator
+                const rect = checkbox.getBoundingClientRect();
+                const sparkle = document.createElement('div');
+                sparkle.className = 'heart-particle';
+                sparkle.textContent = '✨';
+                sparkle.style.left = `${rect.left + 10}px`;
+                sparkle.style.top = `${rect.top}px`;
+                sparkle.style.fontSize = '24px';
+                sparkle.style.setProperty('--dx', '0px');
+                sparkle.style.setProperty('--rot', '20deg');
+                document.body.appendChild(sparkle);
+                setTimeout(() => sparkle.remove(), 2000);
+            }
+        }
+
+        window.onload = function() {
+            // Setup canvas & initialize subtle interactive listeners
+        };
+    </script>
+</body>
+</html>
